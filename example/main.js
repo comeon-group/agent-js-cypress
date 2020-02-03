@@ -15,7 +15,7 @@ const deleteTempFile = filename => {
 
 cypress
   .run({
-    integrationFolder: "example",
+    integrationFolder: "example/integration",
     screenshotsFolder: "example/screenshots"
   })
   .then(

@@ -1,21 +1,35 @@
-const { reporters } = require("mocha");
+const Mocha = require("mocha");
+const {
+  EVENT_RUN_BEGIN,
+  EVENT_RUN_END,
+  EVENT_TEST_BEGIN,
+  EVENT_TEST_END,
+  EVENT_SUITE_BEGIN,
+  EVENT_SUITE_END,
+  EVENT_HOOK_BEGIN,
+  EVENT_HOOK_END,
+  EVENT_TEST_FAIL,
+  EVENT_TEST_PASS,
+  EVENT_TEST_PENDING
+} = Mocha.Runner.constants;
 const RPClient = require("reportportal-client");
-const  { testItemStatuses, logLevels, entityType } = require("./constants");
+const  { testItemStatuses, logLevels, entityType, hooksTypeMap } = require("./constants");
 const { getBase64FileObject } = require("./reporter-utilities");
 
 const { FAILED, SKIPPED } = testItemStatuses;
 const { ERROR } = logLevels;
 
-class ReportPortalReporter extends reporters.Base {
+const getTempHookId = hook => `${hook.parent.id}_${hook.id}_${hook.hookName}`;
+
+class ReportPortalReporter extends Mocha.reporters.Base {
   constructor(runner, config) {
     super(runner);
     this.runner = runner;
     this.client = new RPClient(config.reporterOptions);
-    this.currentTestId = null;
     this.testItemIds = new Map();
-    this.testIds = new Map();
+    this.hookIds = new Map();
 
-    runner.on("start", async () => {
+    runner.once(EVENT_RUN_BEGIN, async () => {
       try {
         const launch = {
           token: config.reporterOptions.token,
@@ -24,7 +38,7 @@ class ReportPortalReporter extends reporters.Base {
           attributes: config.reporterOptions.attributes,
           startTime: new Date().valueOf()
         };
-        
+
         const { tempId, promise } = this.client.startLaunch(launch);
 
         this.tempLaunchId = tempId;
@@ -34,7 +48,7 @@ class ReportPortalReporter extends reporters.Base {
       }
     });
 
-    runner.on("suite", async (suite) => {
+    runner.on(EVENT_SUITE_BEGIN, async suite => {
       try {
         await this.suiteStart(suite);
       } catch (err) {
@@ -42,23 +56,23 @@ class ReportPortalReporter extends reporters.Base {
       }
     });
 
-    runner.on("suite end", async (suite) => {
+    runner.on(EVENT_SUITE_END, async suite => {
       try {
         await this.suiteEnd(suite);
-      } catch(err) {
+      } catch (err) {
         console.error(`Failed to finish suite. Error: ${err}`);
       }
     });
 
-    runner.on("test", async (test) => {
-      try{
+    runner.on(EVENT_TEST_BEGIN, async test => {
+      try {
         await this.testStart(test);
-      } catch(err) {
+      } catch (err) {
         console.error(`Failed to create test item. Error: ${err}`);
       }
     });
 
-    runner.on("test end", async (test) => {
+    runner.on(EVENT_TEST_END, async test => {
       const status = test.state === "pending" ? SKIPPED : test.state;
       try {
         if (status === FAILED) {
@@ -70,7 +84,7 @@ class ReportPortalReporter extends reporters.Base {
       }
     });
 
-    runner.on("end", async () => {
+    runner.once(EVENT_RUN_END, async () => {
       try {
         const { promise } = this.client.finishLaunch(this.tempLaunchId, {
           endTime: new Date().valueOf()
@@ -81,12 +95,51 @@ class ReportPortalReporter extends reporters.Base {
       }
     });
 
+    runner.on(EVENT_HOOK_BEGIN, async hook => {
+      try {
+        console.log("start hook ", hook.title);
+        await this.hookStart(hook);
+      } catch (err) {
+        console.error(`Failed to create test item. Error: ${err}`);
+      }
+    });
+
+    runner.on(EVENT_HOOK_END, async hook => {
+      try {
+        console.log("finish hook ", hook.title);
+        await this.hookFinished(hook);
+      } catch (err) {
+        console.error(`Failed to create test item. Error: ${err}`);
+      }
+    });
+
+    runner.on(EVENT_HOOK_END, async hook => {
+      try {
+        console.log("finish hook ", hook.title);
+        await this.hookFinished(hook);
+      } catch (err) {
+        console.error(`Failed to create test item. Error: ${err}`);
+      }
+    });
+
+    runner.on(EVENT_TEST_FAIL, (test) => {
+      console.log('fail', test.title);
+    });
+
+    runner.on(EVENT_TEST_PENDING, test => {
+      console.log("pending", test.title);
+    });
+
+    runner.on(EVENT_TEST_PASS, test => {
+      console.log("pass", test.title);
+    });
   }
 
   async suiteStart(suite) {
     if (!suite.title) {
       return;
     }
+    console.log("start suite ", suite.title);
 
     const suiteStartObj = {
       type: entityType.SUITE,
@@ -95,7 +148,9 @@ class ReportPortalReporter extends reporters.Base {
       description: suite.description,
       attributes: []
     };
-    const parentId = !suite.root ? this.testItemIds.get(suite.parent.id) : undefined;
+    const parentId = !suite.root
+      ? this.testItemIds.get(suite.parent.id)
+      : undefined;
 
     const { tempId, promise } = this.client.startTestItem(
       suiteStartObj,
@@ -110,6 +165,7 @@ class ReportPortalReporter extends reporters.Base {
     if (!suite.title) {
       return;
     }
+    console.log("finish suite ", suite.title);
     const suiteId = this.testItemIds.get(suite.id);
     const { promise } = this.client.finishTestItem(suiteId, {});
 
@@ -120,6 +176,7 @@ class ReportPortalReporter extends reporters.Base {
     if (!test.title) {
       return;
     }
+    console.log("start test ", test.title);
     const parentId = this.testItemIds.get(test.parent.id);
     const testStartObj = {
       type: entityType.STEP,
@@ -135,7 +192,7 @@ class ReportPortalReporter extends reporters.Base {
     );
 
     this.testItemIds.set(test.id, tempId);
-    await promise;    
+    await promise;
   }
 
   async sendLog(test) {
@@ -146,23 +203,54 @@ class ReportPortalReporter extends reporters.Base {
     await this.client.sendLog(
       testId,
       {
-        message: message,
+        message,
         level: ERROR,
-        time: new Date().valueOf(),
+        time: new Date().valueOf()
       },
       screenShotObj
     );
-
   }
 
   async testFinished(test, finishTestObj) {
+    console.log("finish test ", test.title);
     const testId = this.testItemIds.get(test.id);
     const { promise } = this.client.finishTestItem(testId, {
       endTime: new Date().valueOf(),
-      ...finishTestObj,
+      ...finishTestObj
     });
 
     await promise;
+  }
+
+  async hookStart(hook) {
+    if (!hook.hookName) return;
+    const parentId = this.testItemIds.get(hook.parent.id);
+    const hookTempId = getTempHookId(hook);
+    const hookObj = {
+      type: hooksTypeMap[hook.hookName],
+      name: hook.hookName,
+      description: hook.title,
+      startTime: new Date().valueOf()
+    };
+    // const { tempId, promise } = this.client.startTestItem(
+    //   hookObj,
+    //   this.tempLaunchId,
+    //   parentId
+    // );
+
+    // this.hookIds.set(hookTempId, tempId);
+    // await promise;
+  }
+
+  async hookFinished(hook) {
+    const hookTempId = getTempHookId(hook);
+    const hookId = this.hookIds.get(hookTempId);
+    // const { promise } = this.client.finishTestItem(hookId, {
+    //   endTime: new Date().valueOf(),
+    //   type: hooksTypeMap[hook.hookName],
+    // });
+
+    // await promise;
   }
 }
 
