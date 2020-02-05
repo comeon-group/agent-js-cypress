@@ -1,6 +1,6 @@
 # agent-js-cypress
 
-Cypress js agent is runtime reporter for [EPAM report portal](https://github.com/reportportal/reportportal) which provides information about collection run.
+Cypress js agent is runtime reporter for [EPAM report portal](https://github.com/Comeonautomaten/agent-js-cypress) which provides information about collection run.
 
 ## Install
 
