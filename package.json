@@ -1,5 +1,5 @@
 {
-  "name": "@comeonautomaten/agent-js-cypress",
+  "name": "@comeonautomation/agent-js-cypress",
   "version": "1.0.1",
   "description": "This agent helps Cypress to communicate with Report Portal",
   "main": "rp-reporter.js",
