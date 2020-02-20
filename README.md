@@ -53,7 +53,7 @@ folder.
 ```javascript
 
 const cypress = require('cypress'),
-    RPClient = require('reportportal-client')
+    RPClient = require('@comeonautomation/reportportal-client')
     fs = require('fs'),
     glob = require("glob");
 

@@ -1,5 +1,5 @@
 const cypress = require('cypress');
-const RPClient = require('reportportal-client');
+const RPClient = require('@comeonautomation/reportportal-client');
 const fs = require('fs');
 const glob = require('glob');
 
