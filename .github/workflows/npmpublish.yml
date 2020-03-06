@@ -41,9 +41,8 @@ jobs:
           node-version: 12
           registry-url: https://npm.pkg.github.com/
           scope: '@comeon-stockholm'
-          repo-token: ${{ secrets.git_install_access }}
       - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.git_install_access }}" >> ~/.npmrc
-      - run: npm ci
+      - run: npm i
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
