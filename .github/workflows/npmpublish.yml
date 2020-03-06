@@ -42,7 +42,6 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           scope: '@comeon-stockholm'
           repo-token: ${{ secrets.git_install_access }}
-      - name: Set up NPM authentication
       - run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.git_install_access }}" >> ~/.npmrc
       - run: npm ci
       - run: npm publish
