@@ -41,6 +41,7 @@ jobs:
           node-version: 12
           registry-url: https://npm.pkg.github.com/
           scope: '@comeon-stockholm'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: npm ci
       - run: npm publish
         env:
