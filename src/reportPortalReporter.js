@@ -8,7 +8,7 @@ const {
   EVENT_SUITE_BEGIN,
   EVENT_SUITE_END,
 } = Mocha.Runner.constants;
-const RPClient = require('@comeonautomation/reportportal-client');
+const RPClient = require('@comeon-stockholm/reportportal-client');
 const { testItemStatuses, logLevels, entityType } = require('./constants');
 const { getFailedScreenshot, getPassedScreenshots } = require('./utils');
 
