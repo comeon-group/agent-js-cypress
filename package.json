@@ -6,7 +6,6 @@
   "scripts": {
     "eslint": "eslint \"./**/*.js\"",
     "format": "npm run eslint -- --fix",
-    "test": "node ./example/main.js"
   },
   "keywords": [
     "ReportPortal",
