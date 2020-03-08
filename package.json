@@ -7,7 +7,18 @@
     "eslint": "eslint \"./**/*.js\"",
     "format": "npm run eslint -- --fix"
   },
+  "contributors": [
+    {
+      "name": "Velu S Gautam",
+      "email": "i@velusgautam.com"
+    },
+    {
+      "name": "Roshith CK",
+      "email": "roshith.chiminiyan@comeon.com"
+    }
+  ],
   "keywords": [
+    "comeon-automation",
     "ReportPortal",
     "Cypress",
     "reporting",
