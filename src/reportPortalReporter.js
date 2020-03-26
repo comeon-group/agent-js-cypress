@@ -178,6 +178,12 @@ class ReportPortalReporter extends Mocha.reporters.Base {
 
   async testFinish(test, finishTestObj) {
     const testId = this.testItemIds.get(test.id);
+    
+    if (finishTestObj.status == 'skipped'){
+      finishTestObj.issue = {
+        issueType: 'NOT_ISSUE',
+      };
+    }
     const { promise } = this.client.finishTestItem(testId, {
       endTime: new Date().valueOf(),
       ...finishTestObj,
