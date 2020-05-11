@@ -94,6 +94,7 @@ class ReportPortalReporter extends Mocha.reporters.Base {
           });
           await promise;
         }
+        this.client.findAndDeleteSkippedTests(this.tempLaunchId)
       } catch (err) {
         console.error(`Failed to finish run. Error: ${err}`);
       }
