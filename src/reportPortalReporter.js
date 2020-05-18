@@ -79,22 +79,21 @@ class ReportPortalReporter extends Mocha.reporters.Base {
     runner.on(EVENT_RUN_END, async () => {
       try {
         const failedTests = await this.client.isLaunchWithFailedTests(this.tempLaunchId);
+
         if (failedTests === false) {
-          console.log('Status is Failed');
           const { promise } = this.client.finishLaunch(this.tempLaunchId, {
             endTime: new Date().valueOf(),
             status: 'FAILED',
           });
           await promise;
         } else {
-          console.log('Status is Passed');
           const { promise } = this.client.finishLaunch(this.tempLaunchId, {
             endTime: new Date().valueOf(),
             status: 'PASSED',
           });
           await promise;
         }
-        this.client.findAndDeleteSkippedTests(this.tempLaunchId)
+        this.client.findAndDeleteSkippedTests(this.tempLaunchId);
       } catch (err) {
         console.error(`Failed to finish run. Error: ${err}`);
       }
