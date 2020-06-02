@@ -1,6 +1,6 @@
 {
   "name": "@comeon/agent-js-cypress",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "This agent helps Cypress to communicate with Report Portal",
   "main": "index.js",
   "scripts": {
